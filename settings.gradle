@@ -1,0 +1,4 @@
+rootProject.name = 'tiving'
+include 'major'
+include 'storage'
+include 'converter'
