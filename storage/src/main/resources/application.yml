@@ -1,1 +1,10 @@
-spring.application.name=storage
+server:
+  port: 9000
+
+
+app:
+  upload:
+    dir: /tmp/uploads/
+  hls:
+    dir: /tmp/hls/
+

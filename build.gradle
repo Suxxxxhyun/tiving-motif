@@ -29,6 +29,8 @@ subprojects {
     dependencies { // 모든 하위 모듈에 추가 될 의존성 목록입니다.
         implementation 'org.springframework.boot:spring-boot-starter'
         testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        compileOnly 'org.projectlombok:lombok'
+        annotationProcessor 'org.projectlombok:lombok'
     }
 
     test {
