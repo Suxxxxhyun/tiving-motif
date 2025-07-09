@@ -1,55 +1,59 @@
 package com.storage.domain.service;
 
-import com.storage.domain.dto.Upload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
+import org.springframework.core.io.buffer.DefaultDataBufferFactory;
+import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UploadService {
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+    private final Path root = Paths.get("uploads");
 
-    @Value("${app.hls.dir}")
-    private String hlsDir;
-
-    public Upload.Response upload(MultipartFile file) throws IOException{
-        createDirectories();
-
-        String originalFileName = file.getOriginalFilename();
-        String fileExtension = getFileExtension(originalFileName);
-        String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
-
-        log.info("originalFileName : {}", originalFileName);
-        log.info("fileExtension : {}", fileExtension);
-        log.info("uniqueFileName : {}", uniqueFileName);
-
-        Path uploadPath = Paths.get(uploadDir, uniqueFileName);
-        Files.copy(file.getInputStream(), uploadPath);
-
-        return Upload.Response.of(originalFileName, fileExtension, uniqueFileName);
-    }
-
-    private void createDirectories() throws IOException {
-        Files.createDirectories(Paths.get(uploadDir));
-        Files.createDirectories(Paths.get(hlsDir));
-    }
-
-    private String getFileExtension(String fileName) {
-        if (fileName == null || fileName.lastIndexOf(".") == -1) {
-            return "";
+    public void init() {
+        try {
+            Files.createDirectories(root);
+        } catch (IOException e) {
+            throw new RuntimeException("Could not initialize folder for upload!");
         }
-        return fileName.substring(fileName.lastIndexOf("."));
+    }
+
+    public Mono<String> upload(Mono<FilePart> filePartMono){
+        return filePartMono.doOnNext(
+                fp -> System.out.println("Receiving File:" + fp.filename()))
+                .flatMap(filePart -> {
+            String filename = filePart.filename();
+            return filePart.transferTo(root.resolve(filename)).then(Mono.just(filename));
+        });
+    }
+
+    public Flux<DataBuffer> load(String filename) {
+        try {
+            Path file = root.resolve(filename);
+            Resource resource = new UrlResource(file.toUri());
+
+            if (resource.exists() || resource.isReadable()) {
+                return DataBufferUtils.read(resource, new DefaultDataBufferFactory(), 4096);
+            } else {
+                throw new RuntimeException("Could not read the file!");
+            }
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Error: " + e.getMessage());
+        }
     }
 }
