@@ -1,5 +1,5 @@
 server:
-  port: 7000
+  port: 6000
 
 spring:
   kafka:
@@ -27,3 +27,8 @@ spring:
             trusted.packages: "*"
           type:
             mapping: "myMessage:com.major.domain.dto.MyMessage"
+
+ffmpeg:
+  location: /opt/homebrew/bin/ffmpeg
+ffprobe:
+  location: /opt/homebrew/bin/ffprobe
