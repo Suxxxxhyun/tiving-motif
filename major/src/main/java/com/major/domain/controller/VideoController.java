@@ -69,4 +69,26 @@ public class VideoController {
                     return Mono.empty();
                 });
     }
+
+    @ResponseBody
+    @RequestMapping("/hls/redis/{filename}")
+    public Mono<InputStreamResource> getMasterWithRedis(@PathVariable String filename) {
+        return videoService.getHlsResource(filename)
+                .onErrorResume(e -> {
+                    log.error("Error serving HLS file: {}", filename, e);
+                    return Mono.empty();
+                });
+    }
+
+    @ResponseBody
+    @RequestMapping("/hls/redis/{resolution}/{filename}")
+    public Mono<InputStreamResource> getPlaylistWithRedis(
+            @PathVariable String resolution,
+            @PathVariable String filename) {
+        return videoService.getHlsResource(resolution, filename)
+                .onErrorResume(e -> {
+                    log.error("Error serving HLS file: {}/{}", resolution, filename, e);
+                    return Mono.empty();
+                });
+    }
 }
