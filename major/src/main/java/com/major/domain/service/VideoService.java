@@ -32,22 +32,33 @@ public class VideoService {
                 .doOnNext(
                         part -> builder
                                 .asyncPart("file", part.content(), DataBuffer.class)
-                                .filename(part.filename())
-                )
+                                .filename(part.filename()))
                 .then(Mono.defer(() -> webClient.post()
                         .uri("/api/v1/upload")
                         .contentType(MediaType.MULTIPART_FORM_DATA)
                         .body(BodyInserters.fromMultipartData(builder.build()))
                         .retrieve()
-                        .bodyToMono(String.class)
-                ));
+                        .bodyToMono(String.class)));
     }
 
-    public File getHlsFile(String filename) {
-        return new File(outputPath + "/" + filename);
+
+    public Mono<File> getHlsFile(String filename) {
+        return Mono.fromCallable(() -> {
+        File file = new File(outputPath + "/" + filename);
+            if (!file.exists()) {
+                throw new RuntimeException("File not found: " + filename);
+            }
+            return file;
+        });
     }
 
-    public File getHlsFile(String resolution, String filename) {
-        return new File(outputPath + "/" + resolution + "/" + filename);
+    public Mono<File> getHlsFile(String resolution, String filename) {
+        return Mono.fromCallable(() -> {
+            File file = new File(outputPath + "/" + resolution + "/" + filename);
+            if (!file.exists()) {
+                throw new RuntimeException("File not found: " + resolution + "/" + filename);
+            }
+            return file;
+        });
     }
 }
