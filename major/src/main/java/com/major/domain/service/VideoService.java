@@ -11,6 +11,9 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Objects;
 
 @Service
@@ -19,6 +22,7 @@ import java.util.Objects;
 public class VideoService {
 
     private final WebClient webClient;
+    private final Path outputPath = Paths.get("tls/sample");
 
     public Mono<String> upload(Mono<FilePart> file) {
         MultipartBodyBuilder builder = new MultipartBodyBuilder();
@@ -37,5 +41,13 @@ public class VideoService {
                         .retrieve()
                         .bodyToMono(String.class)
                 ));
+    }
+
+    public File getHlsFile(String filename) {
+        return new File(outputPath + "/" + filename);
+    }
+
+    public File getHlsFile(String resolution, String filename) {
+        return new File(outputPath + "/" + resolution + "/" + filename);
     }
 }
